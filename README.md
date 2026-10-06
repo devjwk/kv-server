@@ -1,7 +1,31 @@
-# Mini-KV Server
+<div align="center">
 
-A multithreaded in-memory key-value server in C: TCP clients, a fixed worker pool, a reader-writer-locked hash table, and expiring keys.
+# MINI-KV SERVER
 
+### Many clients, one hash table, no corruption
+
+**C · POSIX threads · TCP sockets**
+
+![Language](https://img.shields.io/badge/Language-C-6366F1?style=flat-square)
+![Concurrency](https://img.shields.io/badge/Concurrency-pthreads-0F172A?style=flat-square)
+![Network](https://img.shields.io/badge/Network-TCP%20sockets-0891B2?style=flat-square)
+![Peak](https://img.shields.io/badge/Peak-267k%20ops%2Fs-F59E0B?style=flat-square)
+
+Iowa State University · CprE 308 · Project 2 · Spring 2026
+
+[Overview](#overview) · [Architecture](#architecture) · [My role](#my-role) · [Results](#results) · [Limitations](#limitations-and-next-steps)
+
+</div>
+
+---
+
+> **Where it stands — Complete**  
+> All four stages work: TCP server, worker pool, reader-writer locking, and expiring keys.  
+> Throughput peaks at 4 clients, then falls as writers contend for the single table lock.
+
+| Peak throughput | Failed operations | Speed-up · 1 → 4 clients | Largest test |
+| :---: | :---: | :---: | :---: |
+| **267,792 ops/s** | **0** | **7.7×** | **64 clients** |
 | | |
 |---|---|
 | Period | May 2026 (CprE 308 Operating Systems, Project 2) |
@@ -13,10 +37,16 @@ A multithreaded in-memory key-value server in C: TCP clients, a fixed worker poo
 - **Problem:** a server that handles one client at a time wastes every core but one, and a server that shares a hash table between threads without care corrupts it. The project is to serve many clients at once while keeping the table correct.
 - **Design:** the main thread accepts connections and pushes them onto a bounded queue. Worker threads pop connections and serve them. `GET` takes the table lock in read mode; `PUT`, `DEL` and the expiry sweeper take it in write mode. Statistics have their own mutex.
 
-```
-clients ──TCP──> accept thread ──> bounded queue ──> worker pool ──> hash table (rwlock)
-                                                                          ^
-                                                          sweeper thread ─┘ (removes expired keys)
+## Architecture
+
+```mermaid
+flowchart LR
+    C["Clients · TCP"] --> A["Accept thread"]
+    A --> Q["Bounded queue · mutex + 2 condition variables"]
+    Q --> W["Worker pool"]
+    W -->|"GET · read lock"| T[("Hash table · rwlock")]
+    W -->|"PUT, DEL · write lock"| T
+    S["Sweeper thread"] -->|"removes expired keys · write lock"| T
 ```
 
 ## My role
