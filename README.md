@@ -26,6 +26,7 @@ Iowa State University · CprE 308 · Project 2 · Spring 2026
 | Peak throughput | Failed operations | Speed-up · 1 → 4 clients | Largest test |
 | :---: | :---: | :---: | :---: |
 | **267,792 ops/s** | **0** | **7.7×** | **64 clients** |
+
 | | |
 |---|---|
 | Period | May 2026 (CprE 308 Operating Systems, Project 2) |
