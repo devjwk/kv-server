@@ -1,15 +1,11 @@
 <div align="center">
 
-# MINI-KV SERVER
+<img src="assets/banner.svg" alt="MINI-KV SERVER — Many clients, one hash table, no corruption" width="100%">
 
-### Many clients, one hash table, no corruption
-
-**C · POSIX threads · TCP sockets**
-
-![Language](https://img.shields.io/badge/Language-C-6366F1?style=flat-square)
-![Concurrency](https://img.shields.io/badge/Concurrency-pthreads-0F172A?style=flat-square)
-![Network](https://img.shields.io/badge/Network-TCP%20sockets-0891B2?style=flat-square)
-![Peak](https://img.shields.io/badge/Peak-267k%20ops%2Fs-F59E0B?style=flat-square)
+![Language](https://img.shields.io/badge/Language-C-15803D?style=flat-square&labelColor=020617)
+![Concurrency](https://img.shields.io/badge/Concurrency-pthreads-0F172A?style=flat-square&labelColor=020617)
+![Network](https://img.shields.io/badge/Network-TCP%20sockets-166534?style=flat-square&labelColor=020617)
+![Peak](https://img.shields.io/badge/Peak-267k%20ops%2Fs-22C55E?style=flat-square&labelColor=020617)
 
 Iowa State University · CprE 308 · Project 2 · Spring 2026
 
@@ -41,6 +37,7 @@ Iowa State University · CprE 308 · Project 2 · Spring 2026
 ## Architecture
 
 ```mermaid
+%%{init: {"theme": "base", "themeVariables": {"primaryColor": "#15803D", "primaryTextColor": "#ffffff", "primaryBorderColor": "#020617", "lineColor": "#94A3B8", "secondaryColor": "#052E16", "tertiaryColor": "#020617", "clusterBkg": "#F8FAFC", "clusterBorder": "#94A3B8", "edgeLabelBackground": "#F1F5F9", "fontFamily": "ui-sans-serif, system-ui, sans-serif"}}}%%
 flowchart LR
     C["Clients · TCP"] --> A["Accept thread"]
     A --> Q["Bounded queue · mutex + 2 condition variables"]
