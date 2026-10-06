@@ -1,5 +1,64 @@
 # Mini-KV Server
 
+A multithreaded in-memory key-value server in C: TCP clients, a fixed worker pool, a reader-writer-locked hash table, and expiring keys.
+
+| | |
+|---|---|
+| Period | May 2026 (CprE 308 Operating Systems, Project 2) |
+| Team | Individual |
+| Stack | C, POSIX threads, BSD sockets, Make |
+
+## Overview
+
+- **Problem:** a server that handles one client at a time wastes every core but one, and a server that shares a hash table between threads without care corrupts it. The project is to serve many clients at once while keeping the table correct.
+- **Design:** the main thread accepts connections and pushes them onto a bounded queue. Worker threads pop connections and serve them. `GET` takes the table lock in read mode; `PUT`, `DEL` and the expiry sweeper take it in write mode. Statistics have their own mutex.
+
+```
+clients ──TCP──> accept thread ──> bounded queue ──> worker pool ──> hash table (rwlock)
+                                                                          ^
+                                                          sweeper thread ─┘ (removes expired keys)
+```
+
+## My role
+
+Individual project. I wrote the server, the protocol parser, the work queue, the hash table, the TTL sweeper and the benchmark client, and ran the benchmarks.
+
+## What I learned
+
+- The producer-consumer pattern with one mutex and two condition variables (`not_empty`, `not_full`).
+- Choosing lock granularity. One table-wide reader-writer lock is simple and safe, and the benchmark shows exactly where that simplicity costs throughput.
+- Sizing a worker pool by measurement instead of by guess.
+- Clean shutdown: waking blocked workers and the sweeper, then freeing every entry.
+- Writing a benchmark client whose own overhead does not hide the server's behavior.
+
+## Resources used
+
+- Course lecture material on threads and synchronization, and the project handout
+- Linux man pages for `pthread_rwlock`, `pthread_cond`, `socket` and `nanosleep`
+- `nc` for manual protocol testing
+
+## Results
+
+90% GET / 10% PUT workload, 8 workers, 10,000 operations per client:
+
+| Clients | Throughput (ops/s) | Failed operations |
+|---:|---:|---:|
+| 1 | 34,662 | 0 |
+| 4 | 267,792 | 0 |
+| 16 | 217,176 | 0 |
+| 64 | 195,285 | 0 |
+
+Throughput rises almost eightfold from 1 to 4 clients, then falls as writers and the sweeper contend for the single table lock. Full details are in [BENCHMARK.md](BENCHMARK.md).
+
+## Limitations and next steps
+
+- One table-wide lock limits scaling beyond a few clients. Per-bucket locks are the next step.
+- The sweeper holds the write lock for a whole scan, briefly blocking every worker.
+- No persistence: data is lost on restart.
+- Benchmarks were run on a single development machine over loopback.
+
+The sections below are the original project write-up.
+
 ## 1. Build and Run Instructions
 
 Build the server and benchmark client:
